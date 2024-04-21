@@ -1,0 +1,93 @@
+Kamaljeeth Vijay
+04/21/2024
+CIS 3207 Lab 3 Design Document
+
+Space Allocation:
+
+Blocks 0 to 4095 are reserved for the metadata. Block 4096 to 8191 are reserved for file data.
+
+Block 0 is reserved for the boot block. The next order of block reservation is the two File Allocation Tables, and then the Root directory.
+The Root directory only holds metadata for the files, and not the file data itself. File data is stored beginning at Block 409, as specified above.
+File data is stored in a 4096 byte char array, and there are 4096 arrays, one for each block.
+
+When a file is created, the File Allocation Table is used to determine what the starting block of the new file is. If a file's length extends beyond 4096 bytes (1 block), then
+the File Allocation Table will be used to determine the next block, where the data will continued to be written once the current block is full. 
+
+When a file is deleted, the connection between the blocks is removed in the File Allocation Table and the metadata is removed, but the blocks themselves do not have their data wiped. 
+The data will not be removed until the block is used by another file. When a new block is given to a file in fs_write, the block will immediately have all data currently on it wiped.
+
+
+Directory and Data Structures:
+
+Root Directory Struct:
+    An array of 64 Entry Structs
+    Counter variable to track how many files currently exist
+
+Entry Struct:
+    Position of Starting Block
+    Boolean to Check if struct is holding active file data
+    Size of file, in bytes
+    File Descriptor of file, if file is open
+    Offset that determines where reading/writing to this file begins. Default is 0
+    Name of file
+    Data that file was last accessed
+    Time that file was last modified
+    Data that the file was last modified
+
+Data Space Struct:
+    An array of 4096 Empty Space Structs
+    A counter that tracks how many open blocks remain
+
+Empty Space Struct:
+    An array of 4096 chars that represents a Block's data
+    Amount of space left in the above array
+
+Function Descriptions:
+
+make_fs(char* disk_name)
+
+    make_fs creates a virtual disk, initializes all necessary metadata and writes the metadata to the virtual disk.
+
+mount_fs(char* disk_name)
+
+    mount_fs reads metadata information back from virtual disk, and leaves the disk open, allowing for it to be changed.
+
+umount_fs(char* disk_name)
+
+    umount_fs writes back all metadata and data to the virtual disk, and closes the disk.
+
+fs_open(char* name)
+
+    fs_open assigns a file descriptor to an existing file, if there are any available. A maximum of 32 file descriptors can be open at once. A file must be opened before it can be modified.
+
+fs_close(int filedes)
+
+    fs_close removes a file descriptor from an existing file, meaning it will not be modifiable until the file is reopened.
+
+fs_create(char* name)
+
+    Creates a file if possible. There can be at most 64 files in the filesystem at one time.
+
+fs_delete(char* name)
+
+    Deletes a file from the filesystem.
+
+fs_read(int filedes, void* buf, size_t nbyte)
+
+    Reads nbyte bytes of data (buf) from an open file.
+
+fs_write(int filedes, void* buf, size_t nbyte)
+
+    Writes nbyte bytes of data (buf) to an open file.
+
+fs_get_filesize(int filedes)
+
+    Get the size of an open file.
+
+fs_lseek(int filedes, off_t offset)
+
+    Moves the position that fs_read and fs_write begin reading or writing from to a different position in an open file. By default, files will read from the very beginning, and write data to the beginning of the file. The starting position must be within the size of the file.
+
+fs_truncate(int filedes, off_t length)
+
+    Truncates the data in an open file at the specific length. The truncation value must be within the size of the file.
