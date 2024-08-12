@@ -1,4 +1,4 @@
-# Project-3-S24
+# Filesystem Project
 
 ## Make sure to only compile in a Linux/UNIX environment, as this program will not compile in Windows
 
